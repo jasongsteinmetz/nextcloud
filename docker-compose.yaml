@@ -1,0 +1,113 @@
+services:
+  nextcloud:
+    image: nextcloud
+    container_name: nextcloud
+    restart: unless-stopped
+    depends_on:
+      - nextclouddb
+      - redis
+      - harp
+    volumes:
+      - nextcloud_html:/var/www/html
+      - nextcloud_custom_apps:/var/www/html/custom_apps
+      - nextcloud_config:/var/www/html/config
+      - /data/nextcloud:/var/www/html/data
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${NEXTCLOUD_MYSQL_PW}
+      - MYSQL_HOST=nextclouddb
+      - REDIS_HOST=redis
+
+  nextclouddb:
+    image: mariadb
+    container_name: nextcloud-db
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - nextcloud_db:/var/lib/mysql
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+      - MYSQL_RANDOM_ROOT_PASSWORD=true
+      - MYSQL_PASSWORD=${NEXTCLOUD_MYSQL_PW}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      
+  collabora:
+    image: collabora/code
+    container_name: collabora
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+      - password=${COLLABORA_PW}
+      - username=nextcloud
+      - domain=cloud.streametz.com
+      - extra_params=--o:ssl.enable=true
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    volumes:
+      - nextcloud_redis:/data  
+
+  harp:
+    image: ghcr.io/nextcloud/nextcloud-appapi-harp:release
+    container_name: appapi-harp
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - nextcloud_certs:/certs
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - HP_SHARED_KEY=${HARP_SHARED_KEY}
+      - NC_INSTANCE_URL=http://nextcloud
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+
+  talk:
+    image: ghcr.io/nextcloud-releases/aio-talk:latest
+    container_name: talk-hpb
+    restart: unless-stopped
+    init: true
+    ports:
+      - 3478:3478/tcp
+      - 3478:3478/udp
+    environment:
+      - NC_DOMAIN=cloud.streametz.com
+      - TALK_HOST=cloud.streametz.com
+      - TURN_SECRET=${TALK_TURN_SECRET}
+      - SIGNALING_SECRET=${TALK_SIGNALING_SECRET}
+      - INTERNAL_SECRET=${TALK_INTERNAL_SECRET}
+      - TZ=America/New_York
+      - TALK_PORT=3478
+
+networks:
+  default:
+    name: proxy
+    external: true
+
+volumes:
+  nextcloud_html:
+    external: true
+  nextcloud_custom_apps:
+    external: true
+  nextcloud_config:
+    external: true
+  nextcloud_db:
+    external: true
+  nextcloud_redis:
+    external: true
+  nextcloud_certs:
+    external: true
