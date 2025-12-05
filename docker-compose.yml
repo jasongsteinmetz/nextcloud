@@ -3,6 +3,10 @@ services:
     image: nextcloud
     container_name: nextcloud
     restart: unless-stopped
+    networks: 
+      proxy:
+        ipv4_address: 172.21.0.50
+      default:
     depends_on:
       - nextclouddb
       - redis
@@ -61,6 +65,9 @@ services:
     image: ghcr.io/nextcloud/nextcloud-appapi-harp:release
     container_name: appapi-harp
     restart: unless-stopped
+    networks: 
+      proxy:
+        ipv4_address: 172.21.0.51
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - nextcloud_certs:/certs
@@ -80,6 +87,9 @@ services:
     image: ghcr.io/nextcloud-releases/aio-talk:latest
     container_name: talk-hpb
     restart: unless-stopped
+    networks: 
+      proxy:
+        ipv4_address: 172.21.0.52
     init: true
     ports:
       - 3478:3478/tcp
@@ -94,8 +104,7 @@ services:
       - TALK_PORT=3478
 
 networks:
-  default:
-    name: proxy
+  proxy:
     external: true
 
 volumes:
