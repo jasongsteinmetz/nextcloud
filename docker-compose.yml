@@ -12,9 +12,11 @@ services:
       - redis
       - harp
     volumes:
-      - nextcloud_html:/var/www/html
-      - nextcloud_custom_apps:/var/www/html/custom_apps
-      - nextcloud_config:/var/www/html/config
+      # BIND MOUNTS (Absolute Paths)
+      - /var/lib/docker_data/nextcloud/html:/var/www/html
+      - /var/lib/docker_data/nextcloud/custom_apps:/var/www/html/custom_apps
+      - /var/lib/docker_data/nextcloud/config:/var/www/html/config
+      # MEDIA (Large storage)
       - /data/nextcloud:/var/www/html/data
     environment:
       - PUID=1000
@@ -30,9 +32,10 @@ services:
     image: mariadb
     container_name: nextcloud-db
     restart: unless-stopped
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    # Fix for io_uring crashes on Ubuntu 22.04
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-use-native-aio=0
     volumes:
-      - nextcloud_db:/var/lib/mysql
+      - /var/lib/docker_data/nextcloud/db:/var/lib/mysql
     environment:
       - PUID=1000
       - PGID=1000
@@ -41,7 +44,8 @@ services:
       - MYSQL_PASSWORD=${NEXTCLOUD_MYSQL_PW}
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-      
+      - MARIADB_AUTO_UPGRADE=1 # Ensures future updates run smoothly
+
   collabora:
     image: collabora/code
     container_name: collabora
@@ -59,7 +63,7 @@ services:
     image: redis:alpine
     container_name: redis
     volumes:
-      - nextcloud_redis:/data  
+      - /var/lib/docker_data/nextcloud/redis:/data  
 
   harp:
     image: ghcr.io/nextcloud/nextcloud-appapi-harp:release
@@ -70,7 +74,7 @@ services:
         ipv4_address: 172.21.0.51
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - nextcloud_certs:/certs
+      - /var/lib/docker_data/nextcloud/certs:/certs
     environment:
       - PUID=1000
       - PGID=1000
@@ -105,18 +109,4 @@ services:
 
 networks:
   proxy:
-    external: true
-
-volumes:
-  nextcloud_html:
-    external: true
-  nextcloud_custom_apps:
-    external: true
-  nextcloud_config:
-    external: true
-  nextcloud_db:
-    external: true
-  nextcloud_redis:
-    external: true
-  nextcloud_certs:
     external: true
