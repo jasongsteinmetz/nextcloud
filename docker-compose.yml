@@ -34,7 +34,7 @@ services:
       - homepage.href=https://cloud.streametz.com
       # WIDGET
       - homepage.widget.type=nextcloud
-      - homepage.widget.url=http://nextcloud:80
+      - homepage.widget.url=https://cloud.streametz.com
       - homepage.widget.username=admin
       - homepage.widget.password=${NEXTCLOUD_APP_TOKEN}
 
