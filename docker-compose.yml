@@ -27,6 +27,16 @@ services:
       - MYSQL_PASSWORD=${NEXTCLOUD_MYSQL_PW}
       - MYSQL_HOST=nextclouddb
       - REDIS_HOST=redis
+    labels:
+      - homepage.group=Cloud
+      - homepage.name=Nextcloud
+      - homepage.icon=nextcloud.png
+      - homepage.href=https://cloud.streametz.com
+      # WIDGET
+      - homepage.widget.type=nextcloud
+      - homepage.widget.url=http://nextcloud:80
+      - homepage.widget.username=admin
+      - homepage.widget.password=${NEXTCLOUD_APP_TOKEN}
 
   nextclouddb:
     image: mariadb
