@@ -45,6 +45,8 @@ services:
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
       - MARIADB_AUTO_UPGRADE=1 # Ensures future updates run smoothly
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
 
   collabora:
     image: collabora/code
